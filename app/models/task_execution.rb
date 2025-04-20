@@ -3,6 +3,7 @@ class TaskExecution < ApplicationRecord
 
   validates :task_class, presence: true
   validates :status, inclusion: { in: %w[queued running success failed] }
+  validates :label, presence: true
 
   attribute :status, :string, default: "queued"
 

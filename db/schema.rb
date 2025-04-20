@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_04_20_180412) do
+ActiveRecord::Schema[8.0].define(version: 2025_04_20_204030) do
   create_table "app_configs", force: :cascade do |t|
     t.string "key"
     t.text "value"
@@ -43,6 +43,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_20_180412) do
     t.string "error_message"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "label"
     t.index ["status"], name: "index_task_executions_on_status"
   end
 

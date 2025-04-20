@@ -5,12 +5,16 @@ class TaskExecutor
     # Get the actual class for validation
     task_class_constant = task_class_name.constantize
 
+    # Extract label from arguments before validation
+    label = arguments.delete(:label)
+
     # Validate arguments
     validate_arguments(task_class_constant, arguments)
 
     task_execution = TaskExecution.create!(
       task_class: task_class_name,
-      arguments: arguments
+      arguments: arguments,
+      label: label || task_class_constant.to_s.underscore.humanize
     )
 
     # Create TaskActionLogs for all steps upfront
