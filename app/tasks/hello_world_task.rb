@@ -11,6 +11,8 @@ class HelloWorldTask < BaseTask
     puts "Verifying cluster connectivity..."
     sleep 2
     puts "Cluster is ready for task execution"
+
+    TraefikService.new.run
   end
 
   step "Prepare" do
@@ -34,8 +36,10 @@ class HelloWorldTask < BaseTask
   end
 
   step "Finalize" do
+    TraefikService.new.stop
     puts "Starting finalization phase..."
     sleep 2
+    TraefikService.new.remove
     puts "Cleaning up temporary resources..."
     sleep 2
     puts "Updating cluster metadata..."

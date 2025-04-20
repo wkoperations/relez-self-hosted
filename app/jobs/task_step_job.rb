@@ -62,11 +62,7 @@ class TaskStepJob < ApplicationJob
     )
 
     begin
-      if step[:remote]
-        execute_remote_step(task_execution, log, step, context)
-      else
-        execute_local_step(task_execution, log, step, context)
-      end
+      execute_local_step(task_execution, log, step, context)
     rescue => e
       log.mark_as_failed!
       task_execution.mark_as_failed!(e.message)
@@ -95,70 +91,23 @@ class TaskStepJob < ApplicationJob
   private
 
   def broadcast_execution_update(task_execution)
-    # Turbo::StreamsChannel.broadcast_replace_to(
-    #   "task_logs_#{task_execution.id}",
-    #   target: "execution-details",
-    #   content: ApplicationController.renderer.render(
-    #     partial: "task_executions/execution_details",
-    #     locals: { task_execution: task_execution }
-    #   )
-    # )
+    Turbo::StreamsChannel.broadcast_replace_to(
+      "task_logs_#{task_execution.id}",
+      target: "execution-details",
+      content: ApplicationController.renderer.render(
+        partial: "task_executions/execution_details",
+        locals: { task_execution: task_execution }
+      )
+    )
 
-    # Turbo::StreamsChannel.broadcast_replace_to(
-    #   "task_logs_#{task_execution.id}",
-    #   target: "execution-log",
-    #   content: ApplicationController.renderer.render(
-    #     partial: "task_executions/execution_log",
-    #     locals: { task_execution: task_execution }
-    #   )
-    # )
-  end
-
-  def execute_remote_step(task_execution, log, step, context)
-    command = step[:block].call
-    output_buffer = []
-    last_flush = Time.current
-
-    begin
-      Net::SSH.start(
-        context.server.hostname,
-        context.server.ssh_user,
-        keys: [ context.server.ssh_key_path ]
-      ) do |ssh|
-        ssh.open_channel do |channel|
-          channel.exec(command) do |ch, success|
-            unless success
-              error_message = "Failed to execute command: #{command}"
-              output_buffer << error_message
-              flush_output(task_execution, log, output_buffer, last_flush, force: true)
-              raise error_message
-            end
-
-            channel.on_data do |ch, data|
-              output_buffer << data
-              flush_output(task_execution, log, output_buffer, last_flush)
-            end
-
-            channel.on_extended_data do |ch, type, data|
-              output_buffer << data
-              flush_output(task_execution, log, output_buffer, last_flush)
-            end
-
-            channel.on_close do |ch|
-              flush_output(task_execution, log, output_buffer, last_flush, force: true)
-            end
-          end
-        end
-        ssh.loop
-      end
-    rescue Net::SSH::Exception => e
-      error_message = "SSH connection failed: #{e.message}"
-      output_buffer << error_message
-      flush_output(task_execution, log, output_buffer, last_flush, force: true)
-      log.mark_as_failed!
-      task_execution.mark_as_failed!(error_message)
-      raise
-    end
+    Turbo::StreamsChannel.broadcast_replace_to(
+      "task_logs_#{task_execution.id}",
+      target: "execution-log",
+      content: ApplicationController.renderer.render(
+        partial: "task_executions/execution_log",
+        locals: { task_execution: task_execution }
+      )
+    )
   end
 
   def execute_local_step(task_execution, log, step, context)
@@ -169,12 +118,6 @@ class TaskStepJob < ApplicationJob
     begin
       custom_io = create_custom_io(output_io, task_execution, log)
       $stdout = custom_io
-
-      # Log the context details for debugging
-      Rails.logger.debug do
-        "Step context details:\n" \
-        "- arguments: #{context.instance_variable_get(:@arguments).inspect}"
-      end
 
       context.instance_exec(&step[:block])
 
@@ -270,11 +213,11 @@ class TaskStepJob < ApplicationJob
 
     # Use begin/rescue to handle potential broadcast errors
     begin
-      # Turbo::StreamsChannel.broadcast_append_to(
-      #   "task_logs_#{task_execution.id}",
-      #   target: "step-log-#{log.step_index}",
-      #   content: output
-      # )
+      Turbo::StreamsChannel.broadcast_append_to(
+        "task_logs_#{task_execution.id}",
+        target: "step-log-#{log.step_index}",
+        content: output
+      )
     rescue => e
       Rails.logger.error "Error broadcasting output: #{e.message}"
       # Still update the log, but don't break execution

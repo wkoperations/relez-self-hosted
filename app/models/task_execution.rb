@@ -6,12 +6,8 @@ class TaskExecution < ApplicationRecord
 
   attribute :status, :string, default: "queued"
 
-  after_commit -> {
-    broadcast_replace_to "recent_events",
-      target: "recent_events",
-      partial: "dashboard/recent_events",
-      locals: { recent_task_executions: TaskExecution.order(created_at: :desc).limit(3) }
-  }
+  after_create_commit :broadcast_recent_events
+  after_update_commit :broadcast_recent_events
 
   def running?
     status == "running"
@@ -31,5 +27,14 @@ class TaskExecution < ApplicationRecord
 
   def mark_as_failed!(error_message)
     update!(status: "failed", finished_at: Time.current, error_message: error_message)
+  end
+
+  private
+
+  def broadcast_recent_events
+    broadcast_replace_to "recent_events",
+      target: "recent_events",
+      partial: "dashboard/recent_events",
+      locals: { recent_task_executions: TaskExecution.order(created_at: :desc).limit(3) }
   end
 end
