@@ -27,6 +27,30 @@ class BaseTask
     end
   end
 
+  def log(message)
+    return unless @current_log
+
+    # Append the message with a timestamp
+    formatted_message = "[#{Time.current.strftime('%H:%M:%S')}] #{message}\n"
+
+    # Update the log in the database
+    @current_log.with_lock do
+      current_output = @current_log.output || ""
+      @current_log.update!(output: current_output + formatted_message)
+    end
+
+    # Broadcast the new log line
+    begin
+      Turbo::StreamsChannel.broadcast_append_to(
+        "task_logs_#{@current_task_execution.id}",
+        target: "step-log-#{@current_log.step_index}",
+        content: formatted_message
+      )
+    rescue => e
+      Rails.logger.error "Error broadcasting log: #{e.message}"
+    end
+  end
+
   private
 
   def execute_step(step, index)
@@ -52,8 +76,34 @@ class BaseTask
 end
 
 class StepContext
-  def initialize(arguments:)
+  def initialize(arguments:, log: nil, task_execution: nil)
     @arguments = arguments.transform_keys(&:to_sym)
+    @log = log
+    @task_execution = task_execution
+  end
+
+  def log(message)
+    return unless @log
+
+    # Append the message with a timestamp
+    formatted_message = "[#{Time.current.strftime('%H:%M:%S')}] #{message}\n"
+
+    # Update the log in the database
+    @log.with_lock do
+      current_output = @log.output || ""
+      @log.update!(output: current_output + formatted_message)
+    end
+
+    # Broadcast the new log line
+    begin
+      Turbo::StreamsChannel.broadcast_append_to(
+        "task_logs_#{@task_execution.id}",
+        target: "step-log-#{@log.step_index}",
+        content: formatted_message
+      )
+    rescue => e
+      Rails.logger.error "Error broadcasting log: #{e.message}"
+    end
   end
 
   def method_missing(name, *args)
