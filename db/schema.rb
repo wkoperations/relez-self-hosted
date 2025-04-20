@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_04_20_135441) do
+ActiveRecord::Schema[8.0].define(version: 2025_04_20_180412) do
   create_table "app_configs", force: :cascade do |t|
     t.string "key"
     t.text "value"
@@ -19,4 +19,32 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_20_135441) do
     t.string "value_type"
     t.index ["key"], name: "index_app_configs_on_key"
   end
+
+  create_table "task_action_logs", force: :cascade do |t|
+    t.integer "task_execution_id", null: false
+    t.integer "step_index", null: false
+    t.string "step_label", null: false
+    t.string "status"
+    t.text "output"
+    t.datetime "started_at"
+    t.datetime "finished_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["task_execution_id", "step_index"], name: "index_task_action_logs_on_task_execution_id_and_step_index"
+    t.index ["task_execution_id"], name: "index_task_action_logs_on_task_execution_id"
+  end
+
+  create_table "task_executions", force: :cascade do |t|
+    t.string "task_class", null: false
+    t.json "arguments", default: {}
+    t.string "status", default: "queued"
+    t.datetime "started_at"
+    t.datetime "finished_at"
+    t.string "error_message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["status"], name: "index_task_executions_on_status"
+  end
+
+  add_foreign_key "task_action_logs", "task_executions"
 end

@@ -1,0 +1,28 @@
+class TaskExecution < ApplicationRecord
+  has_many :task_action_logs, dependent: :destroy
+
+  validates :task_class, presence: true
+  validates :status, inclusion: { in: %w[queued running success failed] }
+
+  attribute :status, :string, default: "queued"
+
+  def running?
+    status == "running"
+  end
+
+  def completed?
+    %w[success failed].include?(status)
+  end
+
+  def mark_as_running!
+    update!(status: "running", started_at: Time.current)
+  end
+
+  def mark_as_success!
+    update!(status: "success", finished_at: Time.current)
+  end
+
+  def mark_as_failed!(error_message)
+    update!(status: "failed", finished_at: Time.current, error_message: error_message)
+  end
+end
