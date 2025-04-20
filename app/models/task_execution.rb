@@ -6,6 +6,13 @@ class TaskExecution < ApplicationRecord
 
   attribute :status, :string, default: "queued"
 
+  after_commit -> {
+    broadcast_replace_to "recent_events",
+      target: "recent_events",
+      partial: "dashboard/recent_events",
+      locals: { recent_task_executions: TaskExecution.order(created_at: :desc).limit(3) }
+  }
+
   def running?
     status == "running"
   end

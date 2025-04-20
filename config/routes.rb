@@ -15,6 +15,9 @@ Rails.application.routes.draw do
   get "setup/edit" => "setup#edit", as: :edit_setup
   patch "setup" => "setup#update"
 
+  # Task Executions
+  resources :task_executions, only: [ :index, :show ]
+
   # Defines the root path route ("/")
   root to: "dashboard#index"
 end

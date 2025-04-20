@@ -1,0 +1,57 @@
+<div id="execution-details" class="bg-white shadow overflow-hidden sm:rounded-lg">
+  <div class="px-4 py-5 sm:px-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h3 class="text-lg leading-6 font-medium text-gray-900">
+          Task Execution Details
+        </h3>
+        <p class="mt-1 max-w-2xl text-sm text-gray-500">
+          <%= task_execution.task_class %>
+        </p>
+      </div>
+      <div class="<%= status_ring_class(task_execution.status) %>">
+        <%= status_icon(task_execution.status) %>
+      </div>
+    </div>
+  </div>
+  <div class="border-t border-gray-200">
+    <dl>
+      <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+        <dt class="text-sm font-medium text-gray-500">Current Step</dt>
+        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+          <% current_step = if task_execution.error_message.present?
+            task_execution.task_action_logs.find_by(status: "failed")
+          else
+            task_execution.task_action_logs.find_by(status: "running") || task_execution.task_action_logs.order(step_index: :desc).first
+          end %>
+          <%= current_step&.step_label %>
+          <% if current_step %>
+            <span class="ml-2 inline-flex items-center rounded-md <%= status_bg_class(current_step.status) %> px-2 py-1 text-xs font-medium <%= status_text_class(current_step.status) %> ring-1 ring-inset <%= status_ring_class(current_step.status) %>">
+              <%= current_step.status.titleize %>
+            </span>
+          <% end %>
+        </dd>
+      </div>
+      <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+        <dt class="text-sm font-medium text-gray-500">Started At</dt>
+        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+          <%= task_execution.started_at&.strftime("%Y-%m-%d %H:%M:%S") %>
+        </dd>
+      </div>
+      <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+        <dt class="text-sm font-medium text-gray-500">Finished At</dt>
+        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+          <%= task_execution.finished_at&.strftime("%Y-%m-%d %H:%M:%S") %>
+        </dd>
+      </div>
+      <% if task_execution.error_message.present? %>
+        <div class="bg-red-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+          <dt class="text-sm font-medium text-red-500">Error</dt>
+          <dd class="mt-1 text-sm text-red-900 sm:mt-0 sm:col-span-2">
+            <%= task_execution.error_message %>
+          </dd>
+        </div>
+      <% end %>
+    </dl>
+  </div>
+</div> 

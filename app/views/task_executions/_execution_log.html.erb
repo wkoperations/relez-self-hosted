@@ -1,0 +1,24 @@
+<div id="execution-log" class="mt-8 bg-white shadow sm:rounded-lg">
+  <div class="px-4 py-5 sm:p-6">
+    <div>
+      <h3 class="text-lg leading-6 font-medium text-gray-900">
+        Execution Log
+      </h3>
+      <p class="mt-1 text-sm text-gray-500">
+        Real-time output from the task execution
+      </p>
+    </div>
+    <div class="mt-5">
+      <%= turbo_stream_from "task_logs_#{task_execution.id}" %>
+      <div class="space-y-4">
+        <% task_execution.task_action_logs.order(step_index: :asc).each_with_index do |log, index| %>
+          <%= render partial: "task_executions/step_log", 
+                     locals: { 
+                       log: log,
+                       previous_step_index: index > 0 ? task_execution.task_action_logs.order(step_index: :asc)[index - 1].step_index : nil
+                     } %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div> 
