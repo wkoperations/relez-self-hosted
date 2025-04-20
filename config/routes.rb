@@ -18,6 +18,9 @@ Rails.application.routes.draw do
   # Task Executions
   resources :task_executions, only: [ :index, :show ]
 
+  # Apps
+  resources :apps, only: [ :index ]
+
   # Defines the root path route ("/")
   root to: "dashboard#index"
 end

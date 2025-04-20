@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_04_20_204030) do
+ActiveRecord::Schema[8.0].define(version: 2025_04_20_214359) do
   create_table "app_configs", force: :cascade do |t|
     t.string "key"
     t.text "value"
@@ -18,6 +18,22 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_20_204030) do
     t.datetime "updated_at", null: false
     t.string "value_type"
     t.index ["key"], name: "index_app_configs_on_key"
+  end
+
+  create_table "apps", force: :cascade do |t|
+    t.string "name", null: false
+    t.boolean "system", default: false, null: false
+    t.string "image", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "description", null: false
+    t.string "restart_policy", null: false
+    t.boolean "rolling_update", null: false
+    t.string "health_check_path", null: false
+    t.integer "port", null: false
+    t.json "port_mappings", null: false
+    t.index ["name"], name: "index_apps_on_name", unique: true
+    t.index ["restart_policy"], name: "index_apps_on_restart_policy"
   end
 
   create_table "task_action_logs", force: :cascade do |t|
