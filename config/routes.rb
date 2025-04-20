@@ -9,6 +9,12 @@ Rails.application.routes.draw do
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
+  # Setup routes
+  get "setup" => "setup#show"
+  post "setup" => "setup#create"
+  get "setup/edit" => "setup#edit", as: :edit_setup
+  patch "setup" => "setup#update"
+
   # Defines the root path route ("/")
   root to: "dashboard#index"
 end
